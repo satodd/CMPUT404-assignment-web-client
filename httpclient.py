@@ -37,16 +37,25 @@ class HTTPClient(object):
 
     def connect(self, host, port):
         # use sockets!
-        return None
+        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        clientSocket.connect((host,port))
+        
+        return clientSocket
+        #return None
 
     def get_code(self, data):
-        return None
+        code = data.split(" ")[1]
+        return str(code)
 
     def get_headers(self,data):
-        return None
+        headers = data.split("\r\n\r\n")
+        headers = headers[0].split('\n')[1:]
+        return str(headers)
 
     def get_body(self, data):
-        return None
+        body = data.split("\r\n\r\n")[1:]
+        return str(body)
 
     # read everything from the socket
     def recvall(self, sock):
@@ -61,13 +70,32 @@ class HTTPClient(object):
         return str(buffer)
 
     def GET(self, url, args=None):
-        code = 500
-        body = ""
+        
+        request  = "GET " + url + " HTTP/1.0\n\n"
+        
+        socket = self.connect(url, 80)
+        socket.sendall(request)
+        result = self.recvall(socket)
+        
+        code = self.get_code(result)
+        body = self.get_body(result)
+        header = self.get_headers(result)
+    
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        code = 500
-        body = ""
+        
+        request  = "POST" + url + "HTTP/1.0\n\n"
+        
+        socket = self.connect(url, 80)
+        socket.sendall(request)
+        result = self.recvall(socket)
+        
+        code = self.get_code(result)
+        body = self.get_body(result)
+        header = self.get_headers(result)
+        
+        
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):

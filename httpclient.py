@@ -37,16 +37,16 @@ class HTTPClient(object):
 
     def connect(self, host, port):
         # use sockets!
+        print("test1")
         clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        clientSocket.connect((host,port))
-        
+        print("test2")
+        clientSocket.connect((host,int(port)))
+        print("test3")
         return clientSocket
-        #return None
 
     def get_code(self, data):
         code = data.split(" ")[1]
-        return str(code)
+        return int(code)
 
     def get_headers(self,data):
         headers = data.split("\r\n\r\n")
@@ -54,7 +54,8 @@ class HTTPClient(object):
         return str(headers)
 
     def get_body(self, data):
-        body = data.split("\r\n\r\n")[1:]
+        body = data.split("\r\n\r\n")[1:][0]
+
         return str(body)
 
     # read everything from the socket
@@ -70,16 +71,47 @@ class HTTPClient(object):
         return str(buffer)
 
     def GET(self, url, args=None):
+        parsing = re.search('(https?):\/\/([^\/?#]+)(.*)', url)
         
-        request  = "GET " + url + " HTTP/1.0\n\n"
+        protocol = parsing.groups()[0]
+        host = parsing.groups()[1]
+        path = parsing.groups()[2]
+
+
+        s = host.split(':')
         
-        socket = self.connect(url, 80)
-        socket.sendall(request)
-        result = self.recvall(socket)
+        host = s[0]
+        if (len(s) > 1):
+            port = s[1]
+        else:
+            port = 80
         
-        code = self.get_code(result)
-        body = self.get_body(result)
-        header = self.get_headers(result)
+        
+        request = "GET " + path + " HTTP/1.0\n" + "Host: " + host + "\n\n"
+        print('-------\n')
+        print(request)
+        print('-------\n')
+        
+        try:
+            print(host, port)
+            socket = self.connect(host, port)
+            print("connected")
+            socket.sendall(request)
+            print("request sent")
+            result = self.recvall(socket)
+            
+            print(result)
+
+            code = self.get_code(result)
+            body = self.get_body(result)
+
+            header = self.get_headers(result)
+        
+            print(code,body,header)
+            
+        except:
+            code = 404
+            body = "<html><body>404 Error</body></html>\r\n"
     
         return HTTPResponse(code, body)
 
@@ -87,15 +119,22 @@ class HTTPClient(object):
         
         request  = "POST" + url + "HTTP/1.0\n\n"
         
-        socket = self.connect(url, 80)
-        socket.sendall(request)
-        result = self.recvall(socket)
+        try:
+            socket = self.connect(url, 80)
+            socket.sendall(request)
+            result = self.recvall(socket)
         
-        code = self.get_code(result)
-        body = self.get_body(result)
-        header = self.get_headers(result)
+            code = self.get_code(result)
+            body = self.get_body(result)
+            header = self.get_headers(result)
         
-        
+            print(code,body)
+
+        except:
+            print(sys.exc_info())
+            code = 404
+            body = "<html><body>404 Error</body></html>\r\n"
+
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
@@ -113,4 +152,4 @@ if __name__ == "__main__":
     elif (len(sys.argv) == 3):
         print client.command( sys.argv[2], sys.argv[1] )
     else:
-        print client.command( sys.argv[1] )   
+        print client.command(sys.argv[1] )

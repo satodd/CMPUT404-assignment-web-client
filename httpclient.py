@@ -37,11 +37,8 @@ class HTTPClient(object):
 
     def connect(self, host, port):
         # use sockets!
-        print("test1")
         clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("test2")
         clientSocket.connect((host,int(port)))
-        print("test3")
         return clientSocket
 
     def get_code(self, data):
@@ -57,7 +54,44 @@ class HTTPClient(object):
         body = data.split("\r\n\r\n")[1:][0]
 
         return str(body)
+    
+    #parse url, get host, port and path
+    def get_host(self, url):
+    
+        parsing = re.search('(https?):\/\/([^\/?#]+)(.*)', url)
+        
+        protocol = parsing.groups()[0]
+        host = parsing.groups()[1]
+        path = parsing.groups()[2]
+        
+        s = host.split(':')
+        
+        host = s[0]
+        if (len(s) > 1):
+            port = s[1]
+        else:
+            port = 80
+        
+        return host, port, path
+            
+    def get_response(self, request, host, port):
 
+        try:
+            socket = self.connect(host, port)
+            socket.sendall(request)
+            result = self.recvall(socket)
+            
+            code = self.get_code(result)
+            body = self.get_body(result)
+            header = self.get_headers(result)
+    
+        except:
+            code = 404
+            body = "<html><body>404 Error</body></html>\r\n"
+            header = ""
+                
+        return (code, body, header)
+    
     # read everything from the socket
     def recvall(self, sock):
         buffer = bytearray()
@@ -71,69 +105,30 @@ class HTTPClient(object):
         return str(buffer)
 
     def GET(self, url, args=None):
-        parsing = re.search('(https?):\/\/([^\/?#]+)(.*)', url)
-        
-        protocol = parsing.groups()[0]
-        host = parsing.groups()[1]
-        path = parsing.groups()[2]
-
-
-        s = host.split(':')
-        
-        host = s[0]
-        if (len(s) > 1):
-            port = s[1]
-        else:
-            port = 80
-        
-        
+ 
+        host, port, path = self.get_host(url)
         request = "GET " + path + " HTTP/1.0\n" + "Host: " + host + "\n\n"
-        print('-------\n')
-        print(request)
-        print('-------\n')
+        code, body, header = self.get_response(request, host, port)
         
-        try:
-            print(host, port)
-            socket = self.connect(host, port)
-            print("connected")
-            socket.sendall(request)
-            print("request sent")
-            result = self.recvall(socket)
-            
-            print(result)
-
-            code = self.get_code(result)
-            body = self.get_body(result)
-
-            header = self.get_headers(result)
-        
-            print(code,body,header)
-            
-        except:
-            code = 404
-            body = "<html><body>404 Error</body></html>\r\n"
-    
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
         
-        request  = "POST" + url + "HTTP/1.0\n\n"
+        host,port, path = self.get_host(url)
         
-        try:
-            socket = self.connect(url, 80)
-            socket.sendall(request)
-            result = self.recvall(socket)
+        if (args == None):
+            request = ("POST " + path + " HTTP/1.0\n"
+                       "Host: " + host + "\n"
+                       "Content-Length: 0\n\n")
+        else:
+            x = urllib.urlencode(args)
+            request = ("POST " + path + " HTTP/1.0\n"
+                       "Host: " + host + "\n"
+                       "Content-Length: "+ str(len(x)) +"\n"
+                       "\n"
+                       + x)
         
-            code = self.get_code(result)
-            body = self.get_body(result)
-            header = self.get_headers(result)
-        
-            print(code,body)
-
-        except:
-            print(sys.exc_info())
-            code = 404
-            body = "<html><body>404 Error</body></html>\r\n"
+        code, body, header = self.get_response(request, host, port)
 
         return HTTPResponse(code, body)
 

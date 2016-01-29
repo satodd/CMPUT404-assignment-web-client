@@ -119,12 +119,8 @@ class TestHTTPClient(unittest.TestCase):
             print e
             print "run_server: Thread died"
 
-
-
     def test404GET(self):
-        return
         '''Test against 404 errors'''
-        print('test404GET')
         MyHTTPHandler.get = nothing_available
         http = httpclass.HTTPClient()
         req = http.GET("http://%s:%d/49872398432" % (BASEHOST,BASEPORT) )
@@ -132,9 +128,8 @@ class TestHTTPClient(unittest.TestCase):
         self.assertTrue(req.code == 404)
 
     def test404POST(self):
-        
+
         '''Test against 404 errors'''
-        print('test404POST')
         MyHTTPHandler.post = nothing_available
         http = httpclass.HTTPClient()
         req = http.POST("http://%s:%d/49872398432" % (BASEHOST,BASEPORT) )
@@ -142,14 +137,11 @@ class TestHTTPClient(unittest.TestCase):
         self.assertTrue(req.code == 404)
 
     def testGET(self):
-        return
         '''Test HTTP GET'''
-        print('testGET')
         MyHTTPHandler.get = echo_path_get
         http = httpclass.HTTPClient()
         path = "abcdef/gjkd/dsadas"
         url = "http://%s:%d/%s" % (BASEHOST,BASEPORT, path)
-        print(url)
         req = http.GET( url )
         self.assertTrue(req != None, "None Returned!")
         self.assertTrue(req.code == 200)
@@ -157,10 +149,8 @@ class TestHTTPClient(unittest.TestCase):
 
     # consider disabling this test until everything else works
     def testInternetGets(self):
-        return
         '''Test HTTP Get in the wild, these webservers are far less
            forgiving'''
-        print('testInternetGets')
         MyHTTPHandler.get = echo_path_get
         http = httpclass.HTTPClient()        
         urls = [
@@ -187,9 +177,7 @@ class TestHTTPClient(unittest.TestCase):
                                 "%s Data: [%s] " % (url,req.body))
     
     def testPOST(self):
-        
         '''Test HTTP POST with an echo server'''
-        print('testPOST')
         MyHTTPHandler.post = echo_post
         http = httpclass.HTTPClient()
         path = "post_echoer"

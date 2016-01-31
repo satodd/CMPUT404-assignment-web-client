@@ -110,6 +110,8 @@ class HTTPClient(object):
         request = "GET " + path + " HTTP/1.0\n" + "Host: " + host + "\n\n"
         code, body, header = self.get_response(request, host, port)
         
+        print(code,header,body)
+        
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
@@ -129,7 +131,7 @@ class HTTPClient(object):
                        + x)
         
         code, body, header = self.get_response(request, host, port)
-
+        print(code,header,body)
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
